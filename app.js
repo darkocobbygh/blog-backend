@@ -1,6 +1,6 @@
 const express= require('express');
 const Blog= require('./models/Blog');
-const multer= require('multer');
+const env=require('dotenv').config();
 const cors = require('cors');
 const { default: mongoose } = require('mongoose');
 const bodyParser=require('body-parser');
@@ -13,7 +13,7 @@ app.use(express.json());
 app.use(cors());
 
 //CREATE A DATABASE VARIABLE
-const db= 'mongodb://localhost:27017/blogs';
+const db= process.env.DATABASE_URL;
 
 //CONNECT DATABASE 
 mongoose.connect(db,{useNewUrlParser: true,
@@ -24,10 +24,6 @@ mongoose.connect(db,{useNewUrlParser: true,
     console.log(err)
 })
 
-  
-
-
-    
 
 //SHOW OR DISPLAY BLOGS
 app.get('/blogs',(req,res)=>{
@@ -49,9 +45,11 @@ app.post('/new-blog',(req,res)=>{
         content: req.body.content,
     })
     newBlog.save().then((docx)=>{
+        console.log(docx)
         res.status(200).json(docx)
     })
     .catch((err)=>{
+        console.log(err)
         res.status(500).json(err)
     })
 })
@@ -59,13 +57,41 @@ app.post('/new-blog',(req,res)=>{
 
 //CREATE AN INDIVIDUAL ROUTE
 app.get('/blog/:id',(req,res)=>{
-    const id= req.params;
-    console.log('Hello');
-    res.status(200).json(id)
+    const id= req.params.id;
+    Blog.findById(id)
+    .then((result)=>{
+        console.log(result);
+        res.status(201).json(result)
+    })
 })
+
 //UPDATE AN ARTICLE
+    app.put('/blog/update/:id',(req,res)=>{
+        const id= req.params.id;
+        Blog.findByIdAndUpdate(id,req.body,{
+            new:true
+        })
+        .then((updatedBlog)=>{
+            console.log(updatedBlog + ' has been updated');
+            res.status(201).json(updatedBlog + ' has been updated')
+        })
+        .catch((err)=>{
+            console.log(err);
+            res.status(err)
+        })
+    })
 
 //DELETE AN ARTICLE
-app.listen('5000',()=>{
+    app.delete('/blog/delete/:id',(req,res)=>{
+        const id= req.params.id;
+        Blog.findByIdAndDelete(id)
+        .then((results)=>{
+            console.log(results+' has been deleted');
+            res.status(201).json(results+' has been deleted');
+        })
+    })
+
+
+app.listen(process.env.PORT_NUMBER,()=>{
     console.log('Server is running')
 })
